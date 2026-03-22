@@ -3,16 +3,16 @@
 /*
 
 */
-float Med_Angle=0;		//机械中值。---在这里修改你的机械中值即可。
+float Med_Angle=1.7;		//机械中值。---在这里修改你的机械中值即可。
 float Target_Speed=0;	//期望速度（俯仰）。---二次开发接口，用于控制小车前进后退及其速度。
 float Turn_Speed=0;		//期望速度（偏航）
 
 float 
-	Vertical_Kp=-400,//直立环KP、KD
-	Vertical_Kd=-1.92;//-1.7;
+	Vertical_Kp=450,//直立环KP、KD
+	Vertical_Kd=1.8;//1.7;1.92
 float 
-	Velocity_Kp=-0.44,//速度环KP、KI
-	Velocity_Ki=-0.0022;//0.01;
+	Velocity_Kp=0.15,//速度环KP、KI
+	Velocity_Ki=0.00075;//0.01;
 float 
 	Turn_Kd=0.6,//转向环KP、KD
 	Turn_Kp=20;
@@ -65,12 +65,16 @@ void EXTI9_5_IRQHandler(void)
 			Turn_Speed=Turn_Speed>SPEED_Z?SPEED_Z:(Turn_Speed<-SPEED_Z?(-SPEED_Z):Turn_Speed);//限幅( (20*100) * 100   )
 			
 			/*转向约束*/
-			if((Left==0)&&(Right==0))Turn_Kd=0.6;//若无左右转向指令，则开启转向约束
+			if((Left==0)&&(Right==0))Turn_Kd=-0.6;//若无左右转向指令，则开启转向约束
 			else if((Left==1)||(Right==1))Turn_Kd=0;//若左右转向指令接收到，则去掉转向约束
 			/*********************************************************************************************/
 			
 			//2、将数据压入闭环控制中，计算出控制输出量。
 			Velocity_out=Velocity(Target_Speed,Encoder_Left,Encoder_Right);	//速度环
+			
+			//Velocity_out = 0; // 【修改点1】：强制关闭速度环
+			//Turn_out = 0;     // 【修改点2】：强制关闭转向环
+			
 			Vertical_out=Vertical(Velocity_out+Med_Angle,Pitch,gyroy);			//直立环
 			Turn_out=Turn(gyroz,Turn_Speed);																//转向环
 			
