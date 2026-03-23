@@ -52,40 +52,37 @@ void TIM3_Int_Init()
 		TIM_Cmd(TIM3, DISABLE);
 }
 //测距函数
-int Senor_Using() //单精度数据类型
+int Senor_Using(void) 
 {
-		unsigned int sum=0;
-		unsigned int tim;
-		unsigned int i=0;
-		unsigned int length;
-		u16 cnt_i=0;
-		while(i!=3)        //计算一次平均值 3次
-		{
-			TRIG=1;          //拉高信号，作为触发信号
-			delay_us(20);    //高电平信号超过10us
-			TRIG=0;          //等待回响信号
-			cnt_i=0;
-			while(ECHO==0){cnt_i++;delay_us(20);if(cnt_i>2000)
-			{TRIG=1;          //拉高信号，作为触发信号
-			delay_us(20);    //高电平信号超过10us
-			TRIG=0;cnt_i=0;          }} //回响信号到来，开启定时器计数
-			TIM_Cmd(TIM3,ENABLE);
-			
-			i+=1;                     //每收到一次回响信号+1,收到5次就计算均值
-			
-			while(ECHO==1);	//回响信号消失
-			TIM_Cmd(TIM3,DISABLE);    //关闭定时器
-			
-			tim=TIM_GetCounter(TIM3);         //获取计TIM3数寄存器中的计数值
-			length=(tim*100)/58.0; //通过回响信号计算距离
-			if(length>300)length=300;
-			sum=length+sum;
-			TIM3->CNT=0; //将TIM3计数寄存器的计数值清零
-			overcount=0;                                                                //中断溢出次数清零
-			delay_ms(100);
-		}
-		length=sum/3;
-		return length; //距离作为函数返回值
+    unsigned int tim;
+    unsigned int len;
+    u16 cnt_i=0;
+    
+    TRIG=1;          
+    delay_us(20);    
+    TRIG=0;          
+    
+    // 等待回响
+    while(ECHO==0)
+    {
+        cnt_i++;
+        delay_us(20);
+        if(cnt_i>2000) return 300; // 超时退出，防止死机
+    } 
+    
+    TIM_Cmd(TIM3,ENABLE);
+    while(ECHO==1);	
+    TIM_Cmd(TIM3,DISABLE);    
+    
+    tim=TIM_GetCounter(TIM3);         
+    len=(tim*100)/58.0; 
+    
+    TIM3->CNT=0; 
+    
+    // 删除了死延时，限制最大距离为 300cm
+    if(len > 300 || len == 0) len = 300; 
+    
+    return len; 
 }
 
 int main(void)	

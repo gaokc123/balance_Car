@@ -32,19 +32,20 @@ int GFP_abs(int p)
 
 /*赋值函数*/
 /*入口参数：PID运算完成后的最终PWM值*/
-void Load(int moto1,int moto2)//moto1=-200：反转200个脉冲
+void Load(int moto1,int moto2)
 {
-	//1.研究正负号，对应正反转
-	if(moto1>0)	Ain1=1,Ain2=0;//正转
-	else 				Ain1=0,Ain2=1;//反转
-	//2.研究PWM值
+	// 1. 将原来 moto1>0 时的逻辑反过来
+	if(moto1>0)	Ain1=0,Ain2=1;  // 原来是 Ain1=1,Ain2=0
+	else 		Ain1=1,Ain2=0;  // 原来是 Ain1=0,Ain2=1
+	
 	TIM_SetCompare1(TIM1,GFP_abs(moto1));
 	
-	if(moto2>0)	Bin1=1,Bin2=0;
-	else 				Bin1=0,Bin2=1;	
+	// 2. 将原来 moto2>0 时的逻辑反过来
+	if(moto2>0)	Bin1=0,Bin2=1;  // 原来是 Bin1=1,Bin2=0
+	else 		Bin1=1,Bin2=0;  // 原来是 Bin1=0,Bin2=1	
+	
 	TIM_SetCompare4(TIM1,GFP_abs(moto2));
 }
-
 
 char PWM_Zero=0,stop=0;
 void Stop(float *Med_Jiaodu,float *Jiaodu)

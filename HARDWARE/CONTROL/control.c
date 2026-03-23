@@ -44,26 +44,28 @@ void EXTI9_5_IRQHandler(void)
 			MPU_Get_Gyroscope(&gyroy,&gyrox,&gyroz);	//陀螺仪
 			MPU_Get_Accelerometer(&aacx,&aacy,&aacz);	//加速度
 
-			//1.5、二开部分
+			// 1.5、二开部分
 			/*********************************************************************************************/
-			/*前后*/
-			if((Fore==0)&&(Back==0))Target_Speed=0;//未接受到前进后退指令-->速度清零，稳在原地
-			if(Fore==1)
+			/* 1. 正常的遥控逻辑 */
+			if((Fore==0)&&(Back==0)) Target_Speed=0;
+
+			if(Fore==1) Target_Speed += 1;  // 遥控前进
+			if(Back==1) Target_Speed -= 1;  // 遥控后退 (注意这里改成了-=1，原代码写错了)
+
+			/* 2. 超声波避障最高优先级覆盖 (无论遥控发什么，快撞墙了必须接管) */
+			if(length > 0 && length < 30) // 如果距离小于 30cm (可以根据车速修改这个安全距离)
 			{
-				if(length<50)Target_Speed++;
-				else
-				Target_Speed--;
+				Target_Speed = -15;       // 强制给一个负速度（后退刹车）。如果你的车Target_Speed<0是前进，这里就改成正数！
 			}
-			
-			if(Back==1){Target_Speed++;}//
-			Target_Speed=Target_Speed>SPEED_Y?SPEED_Y:(Target_Speed<-SPEED_Y?(-SPEED_Y):Target_Speed);//限幅
-			
-			/*左右*/
+
+			/* 前后速度限幅 */
+			Target_Speed=Target_Speed>SPEED_Y?SPEED_Y:(Target_Speed<-SPEED_Y?(-SPEED_Y):Target_Speed);
+
+			/* 左右逻辑保持不变 */
 			if((Left==0)&&(Right==0))Turn_Speed=0;
-			if(Left==1)Turn_Speed+=30;	//左转
-			if(Right==1)Turn_Speed-=30;	//右转
-			Turn_Speed=Turn_Speed>SPEED_Z?SPEED_Z:(Turn_Speed<-SPEED_Z?(-SPEED_Z):Turn_Speed);//限幅( (20*100) * 100   )
-			
+			if(Left==1)Turn_Speed+=30;	
+			if(Right==1)Turn_Speed-=30;	
+			Turn_Speed=Turn_Speed>SPEED_Z?SPEED_Z:(Turn_Speed<-SPEED_Z?(-SPEED_Z):Turn_Speed);
 			/*转向约束*/
 			if((Left==0)&&(Right==0))Turn_Kd=-0.6;//若无左右转向指令，则开启转向约束
 			else if((Left==1)||(Right==1))Turn_Kd=0;//若左右转向指令接收到，则去掉转向约束
